@@ -1,0 +1,372 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html.light,
+  html:not(.dark) {
+    color-scheme: light;
+  }
+
+  body {
+    overflow-x: hidden;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  html.dark body {
+    background-color: #060913;
+    color: #e2e8f0;
+  }
+
+  html.light body,
+  html:not(.dark) body {
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+
+  /* Custom scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  html.dark ::-webkit-scrollbar-track {
+    background: #090d19;
+  }
+
+  html.dark ::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 4px;
+  }
+
+  html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+  }
+
+  html.light ::-webkit-scrollbar-track,
+  html:not(.dark) ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+
+  html.light ::-webkit-scrollbar-thumb,
+  html:not(.dark) ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+
+  html.light ::-webkit-scrollbar-thumb:hover,
+  html:not(.dark) ::-webkit-scrollbar-thumb:hover {
+    background: #5197f8;
+  }
+}
+
+/* =========================================
+   LIGHT THEME OVERRIDES
+========================================= */
+
+html.light,
+html:not(.dark) {
+  /* Backgrounds */
+  .bg-navy-950 {
+    background-color: #f8fafc !important;
+  }
+
+  .bg-navy-900,
+  .bg-navy-900\/90,
+  .bg-navy-900\/80,
+  .bg-navy-900\/70,
+  .bg-navy-900\/60,
+  .bg-navy-900\/50,
+  .bg-navy-900\/40 {
+    background-color: #ffffff !important;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  }
+
+  .bg-navy-850,
+  .bg-navy-850\/90,
+  .bg-navy-850\/80,
+  .bg-navy-850\/60,
+  .bg-navy-850\/40 {
+    background-color: #f1f5f9 !important;
+  }
+
+  .bg-slate-800,
+  .bg-slate-800\/80,
+  .bg-slate-800\/90 {
+    background-color: #e2e8f0 !important;
+    color: #1e293b !important;
+  }
+
+  /* Borders */
+  .border-slate-800,
+  .border-slate-800\/90,
+  .border-slate-800\/80,
+  .border-slate-800\/60,
+  .border-slate-700,
+  .border-slate-700\/80,
+  .border-slate-900 {
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Typography */
+  .text-white,
+  .text-slate-100 {
+    color: #0f172a !important;
+  }
+
+  .text-slate-200 {
+    color: #1e293b !important;
+  }
+
+  .text-slate-300,
+  .text-slate-300\/90 {
+    color: #334155 !important;
+  }
+
+  .text-slate-400,
+  .text-slate-400\/90,
+  .text-slate-400\/80 {
+    color: #5197f8 !important;
+  }
+
+  .text-slate-500 {
+    color: #64748b !important;
+  }
+
+  /* Cyan accents */
+  .text-cyan-300,
+  .text-cyan-300\/90,
+  .text-cyan-400,
+  .text-cyan-400\/90 {
+    color: #0284c7 !important;
+  }
+
+  .bg-cyan-950,
+  .bg-cyan-950\/80,
+  .bg-cyan-950\/70,
+  .bg-cyan-950\/60,
+  .bg-cyan-950\/40,
+  .bg-cyan-950\/30,
+  .bg-cyan-950\/20 {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+  }
+
+  .border-cyan-500\/30,
+  .border-cyan-500\/20 {
+    border-color: rgba(2, 132, 199, 0.3) !important;
+  }
+
+  /* Emerald accents */
+  .text-emerald-300,
+  .text-emerald-400,
+  .text-emerald-400\/90 {
+    color: #047857 !important;
+  }
+
+  .bg-emerald-950\/20,
+  .bg-emerald-950\/30,
+  .bg-emerald-950\/40,
+  .bg-emerald-950\/60 {
+    background-color: #ecfdf5 !important;
+  }
+
+  /* Amber accents */
+  .text-amber-300,
+  .text-amber-400,
+  .text-amber-400\/90 {
+    color: #b45309 !important;
+  }
+
+  .bg-amber-950\/30,
+  .bg-amber-950\/60 {
+    background-color: #fffbeb !important;
+  }
+
+  /* Rose accents */
+  .text-rose-300,
+  .text-rose-400,
+  .text-rose-400\/80,
+  .text-rose-400\/90 {
+    color: #be123c !important;
+  }
+
+  .bg-rose-950\/60,
+  .bg-rose-950\/50,
+  .bg-rose-950\/40,
+  .bg-rose-950\/20 {
+    background-color: #fff1f2 !important;
+  }
+
+  .border-rose-950\/50,
+  .border-rose-950\/40,
+  .border-rose-800\/40 {
+    border-color: #fecdd3 !important;
+  }
+
+  /* Modal backgrounds */
+  .bg-navy-950\/80,
+  .bg-navy-950\/85,
+  .bg-navy-950\/95 {
+    background-color: rgba(248, 250, 252, 0.9) !important;
+    backdrop-filter: blur(16px);
+  }
+
+  /* Form controls */
+  input,
+  textarea {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  input:focus,
+  textarea:focus {
+    border-color: #0284c7 !important;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15) !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #94a3b8 !important;
+  }
+
+  kbd {
+    background-color: #e2e8f0 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  /* Sticky header */
+  header {
+    background-color: rgba(248, 250, 252, 0.85) !important;
+  }
+
+  /* Hover states */
+  .hover\:bg-navy-850:hover {
+    background-color: #f1f5f9 !important;
+  }
+
+  .hover\:border-slate-700:hover {
+    border-color: #cbd5e1 !important;
+  }
+}
+
+/* =========================================
+   GENERAL UTILITIES
+========================================= */
+
+@layer utilities {
+  .bg-radial-gradient {
+    background: radial-gradient(
+      circle at 50% 0%,
+      rgba(14, 165, 233, 0.15) 0%,
+      rgba(6, 9, 19, 0) 70%
+    );
+  }
+
+  .tech-grid-pattern {
+    background-image: radial-gradient(
+      rgba(56, 189, 248, 0.08) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.25);
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.25);
+  }
+
+  .border-glass {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .bg-glass {
+    background: rgba(14, 22, 40, 0.7);
+    backdrop-filter: blur(12px);
+  }
+}
+
+/* =========================================
+   TECHNOLOGY CARD OVERLAY FIX
+========================================= */
+
+/*
+  IMPORTANT:
+  Replace these class names if your React component
+  uses different names for the card, description or icon.
+*/
+
+.tech-card {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+}
+
+.tech-card__chevron {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 1;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.tech-card__description {
+  position: relative;
+  z-index: 2;
+  background-color: #060913;
+  color: #94a3b8;
+}
+
+/* Light theme description */
+html.light .tech-card__description,
+html:not(.dark) .tech-card__description {
+  background-color: #ffffff;
+  color: #475569;
+}
+
+/* Keep text above the chevron during hover */
+.tech-card:hover .tech-card__description {
+  z-index: 3;
+}
+
+/* Prevent description text from overflowing */
+.tech-card__description {
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .tech-card__description {
+    font-size: 0.8rem;
+    line-height: 1.35;
+  }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+    transition: none;
+  }
+
+  body {
+    transition: none;
+  }
+}
