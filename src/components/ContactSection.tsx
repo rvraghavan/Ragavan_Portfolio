@@ -33,16 +33,52 @@ export const ContactSection: React.FC = () => {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setFormStatus('submitting');
-    setTimeout(() => {
+    setSubmitError(null);
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setFormStatus('success');
+        setFormData({ name: '', email: '', subject: '', message: '' });
+        setTimeout(() => setFormStatus('idle'), 7000);
+      } else {
+        // Fallback: If backend is not started or SMTP credentials not configured yet, offer mailto
+        setSubmitError(data.error || 'Server error occurred while sending email.');
+        setFormStatus('idle');
+      }
+    } catch (err: any) {
+      console.warn('Backend server not responding, falling back to mailto:', err);
+      // Fallback to mailto if server isn't running
+      const subjectLine = formData.subject.trim()
+        ? `[Portfolio Inquiry] ${formData.subject.trim()} - from ${formData.name.trim()}`
+        : `[Portfolio Inquiry] Message from ${formData.name.trim()}`;
+
+      const bodyText = `Hello Raghavan,\n\nName: ${formData.name.trim()}\nEmail: ${formData.email.trim()}\nSubject: ${formData.subject.trim() || 'General Inquiry'}\n\nMessage:\n${formData.message.trim()}\n\n---\nSent via V. Raghavan Portfolio Contact Form`;
+
+      window.location.href = `mailto:${encodeURIComponent(PERSONAL_INFO.email)}?subject=${encodeURIComponent(
+        subjectLine
+      )}&body=${encodeURIComponent(bodyText)}`;
+
       setFormStatus('success');
       setFormData({ name: '', email: '', subject: '', message: '' });
-      setTimeout(() => setFormStatus('idle'), 6000);
-    }, 900);
+      setTimeout(() => setFormStatus('idle'), 7000);
+    }
   };
 
   return (
@@ -168,8 +204,17 @@ export const ContactSection: React.FC = () => {
               <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-xs text-emerald-300 flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
                 <div>
-                  <strong className="block font-semibold">Message simulated successfully!</strong>
-                  <span>Thank you for your message. You can also reach out directly to <strong>{PERSONAL_INFO.email}</strong>.</span>
+                  <strong className="block font-semibold">Message delivered successfully!</strong>
+                  <span>Your email has been sent directly to <strong>{PERSONAL_INFO.email}</strong>.</span>
+                </div>
+              </div>
+            )}
+
+            {submitError && (
+              <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/30 text-xs text-rose-300 flex items-start gap-2.5">
+                <div>
+                  <strong className="block font-semibold">Delivery Warning:</strong>
+                  <span>{submitError}</span>
                 </div>
               </div>
             )}
