@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 export default async function handler(req, res) {
   // Only accept POST requests
@@ -16,38 +16,27 @@ export default async function handler(req, res) {
       });
     }
 
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-    const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-    const smtpPort = Number(process.env.SMTP_PORT) || 465;
-    const smtpSecure = process.env.SMTP_SECURE === 'true' || smtpPort === 465;
-    const receiverEmail = process.env.RECEIVER_EMAIL || 'rvraghavan.it@gmail.com';
+    const apiKey = process.env.RESEND_API_KEY;
 
-    if (!smtpUser || !smtpPass) {
+    if (!apiKey) {
       return res.status(500).json({
         success: false,
-        error: 'SMTP credentials not configured on server. Please add SMTP_USER and SMTP_PASS in Vercel Environment Variables.',
+        error: 'RESEND_API_KEY is not configured on the server. Please add RESEND_API_KEY in your Vercel Environment Variables.',
       });
     }
 
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpSecure,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    });
+    const resend = new Resend(apiKey);
+    const receiverEmail = process.env.RECEIVER_EMAIL || 'rvraghavan.it@gmail.com';
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'Portfolio Contact <onboarding@resend.dev>';
 
     const mailSubject = subject && subject.trim()
       ? `[Portfolio Inquiry] ${subject.trim()} - from ${name.trim()}`
       : `[Portfolio Inquiry] Message from ${name.trim()}`;
 
-    const mailOptions = {
-      from: `"V. Raghavan Portfolio" <${smtpUser}>`,
-      replyTo: `"${name}" <${email}>`,
+    const { data, error } = await resend.emails.send({
+      from: fromEmail,
       to: receiverEmail,
+      replyTo: email,
       subject: mailSubject,
       text: `New Inquiry from Raghavan's Portfolio Website:\n\nName: ${name}\nEmail: ${email}\nSubject: ${subject || 'General Inquiry'}\n\nMessage:\n${message}\n\n---\nSent via V. Raghavan Portfolio Website`,
       html: `
@@ -60,23 +49,29 @@ export default async function handler(req, res) {
           <h4 style="color: #334155; margin-bottom: 8px;">Message:</h4>
           <div style="background-color: #f8fafc; padding: 16px; border-radius: 6px; color: #1e293b; line-height: 1.6; white-space: pre-wrap;">${message}</div>
           <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
-          <p style="font-size: 11px; color: #64748b; margin-bottom: 0;">Delivered via Vercel Serverless Function & Gmail SMTP.</p>
+          <p style="font-size: 11px; color: #64748b; margin-bottom: 0;">Delivered via Resend Email API.</p>
         </div>
       `,
-    };
+    });
 
-    const info = await transporter.sendMail(mailOptions);
+    if (error) {
+      console.error('Resend API error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to send email via Resend.',
+      });
+    }
 
     return res.status(200).json({
       success: true,
       message: 'Email successfully sent to ' + receiverEmail,
-      messageId: info.messageId,
+      id: data?.id,
     });
-  } catch (error) {
-    console.error('Vercel SMTP Mail error:', error);
+  } catch (err) {
+    console.error('Unexpected error:', err);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to send email via SMTP.',
+      error: err.message || 'An unexpected error occurred.',
     });
   }
 }

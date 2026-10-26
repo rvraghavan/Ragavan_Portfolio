@@ -211,11 +211,23 @@ export const ContactSection: React.FC = () => {
             )}
 
             {submitError && (
-              <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/30 text-xs text-rose-300 flex items-start gap-2.5">
-                <div>
-                  <strong className="block font-semibold">Delivery Warning:</strong>
-                  <span>{submitError}</span>
+              <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/30 text-xs text-rose-300 flex flex-col gap-2.5">
+                <div className="flex items-start gap-2">
+                  <span className="text-rose-400 font-bold">!</span>
+                  <div>
+                    <strong className="block font-semibold">Delivery Notice:</strong>
+                    <span>{submitError}</span>
+                  </div>
                 </div>
+                <a
+                  href={`mailto:${encodeURIComponent(PERSONAL_INFO.email)}?subject=${encodeURIComponent(
+                    formData.subject?.trim() || 'Portfolio Inquiry'
+                  )}&body=${encodeURIComponent(formData.message?.trim() || '')}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/30 text-[11px] font-medium w-fit transition-colors"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Send directly via your email client instead</span>
+                </a>
               </div>
             )}
 
