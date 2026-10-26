@@ -1,6 +1,6 @@
+
 import express from 'express';
 import cors from 'cors';
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -9,92 +9,156 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '20kb' }));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'SMTP Mailer Service is operational' });
+  res.json({
+    status: 'ok',
+    message: 'Resend email service is operational',
+  });
 });
 
 // Contact message endpoint
 app.post('/api/contact', async (req, res) => {
   try {
-    const { name, email, subject, message } = req.body;
+    const { name, email, subject, message } = req.body || {};
 
-    if (!name || !email || !message) {
+    if (
+      typeof name !== 'string' ||
+      typeof email !== 'string' ||
+      typeof message !== 'string' ||
+      !name.trim() ||
+      !email.trim() ||
+      !message.trim()
+    ) {
       return res.status(400).json({
         success: false,
-        error: 'Name, email, and message are required fields.',
+        error: 'Name, email, and message are required.',
       });
     }
 
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-    const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-    const smtpPort = Number(process.env.SMTP_PORT) || 465;
-    const smtpSecure = process.env.SMTP_SECURE === 'true' || smtpPort === 465;
-    const receiverEmail = process.env.RECEIVER_EMAIL || 'rvraghavan.it@gmail.com';
+    if (
+      name.length > 100 ||
+      email.length > 254 ||
+      message.length > 5000 ||
+      (subject != null &&
+        (typeof subject !== 'string' || subject.length > 200))
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: 'One or more fields are invalid or too long.',
+      });
+    }
 
-    if (!smtpUser || !smtpPass) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide a valid email address.',
+      });
+    }
+
+    const apiKey = process.env.RESEND_API_KEY;
+    const receiverEmail = process.env.RECEIVER_EMAIL;
+
+    if (!apiKey || !receiverEmail) {
+      console.error('Missing RESEND_API_KEY or RECEIVER_EMAIL');
+
       return res.status(500).json({
         success: false,
-        error: 'SMTP credentials not configured on the server. Please check .env file.',
+        error: 'Email service is not configured.',
       });
     }
 
-    // Configure Nodemailer transporter
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpSecure,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
+    const cleanName = name.trim();
+    const cleanEmail = email.trim();
+    const cleanSubject = subject?.trim() || 'General Inquiry';
+    const cleanMessage = message.trim();
+
+    // Escape user input before inserting it into HTML.
+    const escapeHtml = (value) =>
+      value.replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[char]);
+
+    const safeName = escapeHtml(cleanName);
+    const safeEmail = escapeHtml(cleanEmail);
+    const safeSubject = escapeHtml(cleanSubject);
+    const safeMessage = escapeHtml(cleanMessage);
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        // Testing sender. Verify your own domain for production.
+        from: 'V. Raghavan Portfolio <onboarding@resend.dev>',
+        to: [receiverEmail],
+        reply_to: cleanEmail,
+        subject: `[Portfolio Inquiry] ${cleanSubject} - from ${cleanName}`,
+        text:
+          `New inquiry from V. Raghavan's Portfolio Website\n\n` +
+          `Name: ${cleanName}\n` +
+          `Email: ${cleanEmail}\n` +
+          `Subject: ${cleanSubject}\n\n` +
+          `Message:\n${cleanMessage}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #e2e8f0;border-radius:8px">
+            <h2 style="color:#0284c7">New Portfolio Contact Inquiry</h2>
+            <p><strong>Sender Name:</strong> ${safeName}</p>
+            <p><strong>Sender Email:</strong> ${safeEmail}</p>
+            <p><strong>Subject:</strong> ${safeSubject}</p>
+            <hr />
+            <h4>Message</h4>
+            <div style="background:#f8fafc;padding:16px;border-radius:6px;white-space:pre-wrap">${safeMessage}</div>
+            <hr />
+            <p style="font-size:11px;color:#64748b">Sent via V. Raghavan's portfolio website.</p>
+          </div>
+        `,
+      }),
     });
 
-    const mailSubject = subject && subject.trim()
-      ? `[Portfolio Inquiry] ${subject.trim()} - from ${name.trim()}`
-      : `[Portfolio Inquiry] Message from ${name.trim()}`;
+    const result = await response.json();
 
-    const mailOptions = {
-      from: `"Portfolio Contact Form" <${smtpUser}>`,
-      replyTo: `"${name}" <${email}>`,
-      to: receiverEmail,
-      subject: mailSubject,
-      text: `New Inquiry from Raghavan's Portfolio Website:\n\nName: ${name}\nEmail: ${email}\nSubject: ${subject || 'General Inquiry'}\n\nMessage:\n${message}\n\n---\nSent via V. Raghavan Portfolio Website`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-          <h2 style="color: #0284c7; border-bottom: 2px solid #0284c7; padding-bottom: 8px; margin-top: 0;">New Portfolio Contact Inquiry</h2>
-          <p style="margin: 8px 0;"><strong>Sender Name:</strong> ${name}</p>
-          <p style="margin: 8px 0;"><strong>Sender Email:</strong> <a href="mailto:${email}">${email}</a></p>
-          <p style="margin: 8px 0;"><strong>Subject:</strong> ${subject || 'General Inquiry'}</p>
-          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
-          <h4 style="color: #334155; margin-bottom: 8px;">Message:</h4>
-          <div style="background-color: #f8fafc; padding: 16px; border-radius: 6px; color: #1e293b; line-height: 1.6; white-space: pre-wrap;">${message}</div>
-          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
-          <p style="font-size: 11px; color: #64748b; margin-bottom: 0;">This email was delivered via V. Raghavan Portfolio Website Backend SMTP Server.</p>
-        </div>
-      `,
-    };
+    if (!response.ok) {
+      // Log the provider's response, never the API key.
+      console.error('Resend API error:', response.status, result);
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', info.messageId);
+      return res.status(502).json({
+        success: false,
+        error: 'Email delivery failed. Please try again later.',
+      });
+    }
+
+    console.log('Resend accepted email:', result.id);
 
     return res.status(200).json({
       success: true,
-      message: 'Email successfully sent to ' + receiverEmail,
-      messageId: info.messageId,
+      message: 'Your inquiry has been submitted successfully.',
+      messageId: result.id,
     });
   } catch (error) {
-    console.error('SMTP Mail error:', error);
+    console.error('Contact form error:', error.message);
+
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to send email via SMTP.',
+      error: 'Unable to send your message right now.',
     });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`SMTP Mail Server is running on http://localhost:${PORT}`);
-});
+// Export for Vercel's serverless runtime.
+// Listen locally when running this file directly.
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Portfolio API running on port ${PORT}`);
+  });
+}
+
+export default app;
